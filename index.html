@@ -850,6 +850,7 @@ async function getDay(key){
 async function setDay(key, data){
   try{
     await lsSet(`day:${key}`, JSON.stringify(data));
+    await syncEventsToServerForNotifs();
   }catch(e){
     console.error('storage error', e);
     toast('No se pudo guardar. Intenta de nuevo.');
@@ -1118,9 +1119,11 @@ async function subscribeToPush(){
 }
 
 let serverNotifSyncTimer = null;
-function scheduleServerNotifSync(immediate){
+function scheduleServerNotifSync(){
+  // Sin espera: se manda al servidor de inmediato, para no arriesgar perder
+  // el envío si el usuario cierra la app un instante después de guardar.
   if(serverNotifSyncTimer) clearTimeout(serverNotifSyncTimer);
-  serverNotifSyncTimer = setTimeout(syncEventsToServerForNotifs, immediate ? 0 : 2000);
+  serverNotifSyncTimer = setTimeout(syncEventsToServerForNotifs, 0);
 }
 
 async function syncEventsToServerForNotifs(){
