@@ -6,7 +6,11 @@ exports.handler = async (event) => {
   }
   try {
     const body = JSON.parse(event.body); // { events: [{id, nombre, key, hora, horaFin}, ...] }
-    const store = getStore('agenda-valentina');
+    const store = getStore({
+      name: 'agenda-valentina',
+      siteID: process.env.BLOBS_SITE_ID,
+      token: process.env.BLOBS_TOKEN
+    });
     await store.set('events-sync', JSON.stringify(body));
     return {
       statusCode: 200,
