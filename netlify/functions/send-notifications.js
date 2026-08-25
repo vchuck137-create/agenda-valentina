@@ -49,7 +49,7 @@ const runner = async () => {
 
   for (const ev of synced.events) {
     if (!ev.key || !ev.hora) continue;
-    const start = new Date(`${ev.key}T${ev.hora}:00`);
+    const start = new Date(`${ev.key}T${ev.hora}:00-06:00`);
     const fiveBefore = new Date(start.getTime() - 5 * 60000);
     const timeLabel = ev.hora + (ev.horaFin ? '–' + ev.horaFin : '');
 
@@ -86,7 +86,7 @@ const runner = async () => {
     const evId = id.split(':')[0];
     const ev = synced.events.find((e) => e.id === evId);
     if (!ev) return false;
-    return new Date(`${ev.key}T${ev.hora}:00`).getTime() > cutoff;
+    return new Date(`${ev.key}T${ev.hora}:00-06:00`).getTime() > cutoff;
   });
 
   if (changed || trimmed.length !== sentList.length) {
