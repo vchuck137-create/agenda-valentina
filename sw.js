@@ -1,4 +1,11 @@
 self.addEventListener('push', (event) => {
+  // Señal de diagnóstico: avisa al servidor que el push SÍ llegó al teléfono,
+  // pase lo que pase después con showNotification. Esto nos deja confirmar
+  // la entrega real revisando los logs de la función "log-push" en Netlify.
+  event.waitUntil(
+    fetch('/.netlify/functions/log-push', { method: 'POST' }).catch(() => {})
+  );
+
   let data = { title: 'Agenda de Valentina', body: '' };
   try {
     data = event.data.json();
@@ -8,6 +15,12 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'Agenda de Valentina', {
       body: data.body || ''
+    }).catch((err) => {
+      fetch('/.netlify/functions/log-push', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ error: String(err) })
+      }).catch(() => {});
     })
   );
 });
