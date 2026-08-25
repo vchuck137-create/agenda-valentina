@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Agenda · Valentina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1F7F0;
+    --card:#FFFFFF;
+    --ink:#2C4A34;
+    --ink-soft:#4F7059;
+    --muted:#9AB39F;
+    --line:#DAEBDB;
+    --accent:#7FB88F;
+    --accent-soft:#E3F1E5;
+    --accent-ink:#3E6B4B;
+    --food:#8FBF9A;
+    --food-soft:#E6F2E7;
+    --food-ink:#3E6B4B;
+    --radius:16px;
+    --radius-sm:10px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+  }
+  #app{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    background:var(--paper);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* Header */
+  header{
+    padding:22px 20px 14px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 2px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:28px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .bell{
+    position:absolute;
+    top:22px;
+    right:18px;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+  }
+  .bell.on{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+
+  /* Month nav + day strip */
+  .month-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    margin-bottom:10px;
+  }
+  .month-nav .label{
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    font-weight:500;
+    text-transform:capitalize;
+    color:var(--ink-soft);
+  }
+  .month-nav button{
+    border:none;
+    background:none;
+    color:var(--muted);
+    font-size:18px;
+    cursor:pointer;
+    padding:4px 10px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .day-strip{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:4px 20px 16px;
+    scrollbar-width:none;
+  }
+  .day-strip::-webkit-scrollbar{display:none;}
+  .day-pill{
+    flex:0 0 auto;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    cursor:pointer;
+    position:relative;
+    flex-direction:column;
+  }
+  .day-pill .dow{
+    display:none;
+  }
+  .day-pill.today{
+    border:1.5px dashed var(--accent);
+    color:var(--accent-ink);
+  }
+  .day-pill.selected{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .day-pill .dot{
+    position:absolute;
+    bottom:3px;
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:var(--accent);
+  }
+  .day-pill.selected .dot{background:#fff;}
+
+  /* Tabs */
+  .tabbar{
+    display:flex;
+    gap:6px;
+    padding:0 20px 14px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:9px 0;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    color:var(--muted);
+  }
+  .tab.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+
+  main{
+    flex:1;
+    padding:0 20px 100px;
+  }
+
+  .section-title{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:600;
+    margin:18px 0 10px;
+    text-transform:capitalize;
+  }
+
+  /* Timeline */
+  .default-box{
+    background:var(--card);
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    margin-bottom:12px;
+  }
+  .default-box-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .default-box-actions{
+    display:flex;
+    gap:8px;
+  }
+  .dbtn{
+    flex:1;
+    text-align:center;
+    padding:8px 0;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+  }
+  .dbtn.warn{
+    border-color:#4F8C60;
+    color:#2C5A3B;
+    background:#DCEEDF;
+  }
+  .default-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    margin-bottom:8px;
+  }
+  .default-row > div{min-width:0;}
+  .default-row-name{
+    font-size:13.5px;
+    font-weight:600;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .default-row-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .default-row .rm{
+    flex:0 0 auto;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:16px;
+  }
+  .timeline{
+    position:relative;
+    margin-top:6px;
+  }
+  .tl-hours{
+    position:relative;
+  }
+  .tl-hour{
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+  }
+  .tl-hour-label{
+    width:58px;
+    flex:0 0 58px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    transform:translateY(-6px);
+    white-space:nowrap;
+  }
+  .tl-hour-line{
+    flex:1;
+    border-top:1.5px dashed var(--line);
+    margin-top:4px;
+  }
+  .tl-events-layer{
+    position:absolute;
+    top:0;
+    left:58px;
+    right:0;
+    bottom:0;
+  }
+  .tl-event{
+    position:absolute;
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    border-radius:8px;
+    padding:6px 10px;
+    cursor:pointer;
+    overflow:hidden;
+    box-shadow:2px 2px 0 var(--line);
+    box-sizing:border-box;
+  }
+  .tl-event.point{
+    border-style:solid;
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .tl-event.done{
+    background:var(--food-soft);
+    border-color:var(--food);
+    opacity:0.75;
+  }
+  .tl-event .tl-name{
+    font-weight:600;
+    font-size:13px;
+    line-height:1.25;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tl-event.done .tl-name{
+    text-decoration:line-through;
+  }
+  .tl-event .tl-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    margin-top:1px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tl-event.short .tl-time{display:none;}
+  .tl-event.short{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+    padding:3px 10px;
+  }
+  .tl-event.short .tl-name{font-size:12.5px;}
+  .tl-event.short .tl-inline-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--accent-ink);
+    flex:0 0 auto;
+    white-space:nowrap;
+  }
+  .tl-event.compact{
+    display:flex;
+    align-items:center;
+    padding:2px 8px;
+  }
+  .tl-event.compact .tl-time{display:none;}
+  .tl-event.compact .tl-name{font-size:11.5px;}
+  .sheet-body-scroll{max-height:60vh; overflow-y:auto;}
+
+  /* Event card */
+  .event{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:12px;
+  }
+  .event.done{
+    opacity:0.55;
+  }
+  .event-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+    cursor:pointer;
+  }
+  .event-name{
+    font-weight:600;
+    font-size:15px;
+    line-height:1.3;
+  }
+  .event-meta{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  .event-name.done{
+    text-decoration:line-through;
+  }
+  .chev{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:2px;
+  }
+  .event-body{
+    margin-top:12px;
+    border-top:1px dashed var(--line);
+    padding-top:12px;
+  }
+  .sub-list, .spec-list{
+    margin:0 0 8px;
+    padding:0;
+    list-style:none;
+  }
+  .sub-list li{
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    padding:4px 0 10px 14px;
+    margin-bottom:6px;
+    position:relative;
+    border-bottom:1px dashed var(--line);
+  }
+  .sub-list li:last-child{border-bottom:none; margin-bottom:0;}
+  .sub-list li::before{
+    content:"•";
+    position:absolute;
+    left:0;
+    color:var(--accent);
+  }
+  .spec-list{
+    margin:6px 0 4px 4px !important;
+  }
+  .spec-list li{
+    font-size:12.5px;
+    font-weight:400;
+    color:var(--muted);
+    padding:3px 0 3px 14px;
+    margin-bottom:0;
+    border-bottom:none;
+    position:relative;
+  }
+  .spec-list li::before{
+    content:"–";
+    position:absolute;
+    left:0;
+  }
+  .btn.cancel{
+    background:#fff;
+    border-color:var(--muted);
+    color:var(--muted);
+  }
+  .mini-add{
+    display:flex;
+    gap:6px;
+    margin:8px 0;
+  }
+  .mini-add input{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:7px 9px;
+    font-size:13px;
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+  }
+  .mini-add button{
+    border:none;
+    background:var(--ink);
+    color:#fff;
+    border-radius:8px;
+    padding:0 12px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .event-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .btn{
+    flex:1;
+    text-align:center;
+    padding:9px 0;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+  }
+  .btn.primary{
+    background:var(--food-soft);
+    border-color:var(--food);
+    color:var(--food-ink);
+  }
+  .btn.secondary{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent-ink);
+  }
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:30px 10px;
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius);
+  }
+
+  .add-event-btn{
+    width:100%;
+    padding:13px 0;
+    border-radius:var(--radius);
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:4px;
+  }
+
+  /* Modal form */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(28,33,48,0.4);
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+  }
+  .sheet{
+    width:100%;
+    max-width:430px;
+    background:var(--card);
+    border-radius:20px 20px 0 0;
+    padding:22px 20px 26px;
+    max-height:85vh;
+    overflow-y:auto;
+  }
+  .sheet h3{
+    font-family:'Fraunces',serif;
+    margin:0 0 14px;
+    font-size:19px;
+  }
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:5px;
+    font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .field input, .field select{
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+  }
+  .field input.field-error{
+    border-color:#C23D3D;
+    background:#FBEAEA;
+  }
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+  .sheet-actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .sheet-actions .btn{padding:11px 0;}
+
+  /* Reminders */
+  .reminder{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:11px 14px;
+    margin-bottom:8px;
+  }
+  .reminder input[type=checkbox]{
+    width:18px;height:18px;accent-color:var(--accent);
+  }
+  .reminder span{
+    flex:1;
+    min-width:0;
+    font-size:13.5px;
+    word-break:break-word;
+  }
+  .reminder.checked span{
+    text-decoration:line-through;
+    color:var(--muted);
+  }
+
+  /* Food section */
+  .rec-card{
+    background:var(--food-soft);
+    border:1.5px solid var(--food);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:20px;
+  }
+  .rec-card .eyebrow{color:var(--food-ink);}
+  .rec-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:8px;
+    font-size:14px;
+    padding:6px 0;
+    border-bottom:1px dashed rgba(62,107,75,0.2);
+  }
+  .rec-row:last-of-type{border-bottom:none;}
+  .rec-row span:first-child{flex:0 0 auto;}
+  .rec-row b{
+    font-weight:600;
+    flex:1;
+    min-width:0;
+    text-align:right;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .rec-row-clickable{cursor:pointer;}
+  .rec-view{
+    font-size:10.5px;
+    font-weight:500;
+    color:var(--food-ink);
+    opacity:0.7;
+    margin-left:4px;
+  }
+  .reroll{
+    width:100%;
+    margin-top:12px;
+    padding:10px 0;
+    border-radius:10px;
+    border:1.5px solid var(--food);
+    background:#fff;
+    color:var(--food-ink);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .slot-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .slot-btn{
+    text-align:center;
+    padding:9px 4px;
+    border-radius:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    font-weight:600;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .slot-btn:hover{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+    color:var(--accent-ink);
+  }
+  .food-col-title{
+    font-size:13px;
+    font-weight:700;
+    margin:16px 0 8px;
+    color:var(--ink-soft);
+  }
+  .food-opt{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    margin-bottom:6px;
+    font-size:13.5px;
+  }
+  .food-opt span:first-child{
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    cursor:pointer;
+  }
+  .food-opt .rm{
+    flex:0 0 auto;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:15px;
+  }
+  .add-food-btn{
+    width:100%;
+    padding:10px 0;
+    border-radius:10px;
+    border:1.5px dashed var(--line);
+    background:none;
+    color:var(--ink-soft);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    margin-bottom:4px;
+  }
+
+  .note{
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:center;
+    padding:16px 30px 6px;
+    line-height:1.5;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--ink);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:13px;
+    z-index:100;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bell" id="bellBtn" title="Notificaciones">🔔</div>
+  <header>
+    <p class="eyebrow">planner personal</p>
+    <h1>Agenda de Valentina</h1>
+  </header>
+
+  <div class="month-nav">
+    <button id="prevMonth">‹</button>
+    <div class="label" id="monthLabel"></div>
+    <button id="nextMonth">›</button>
+  </div>
+  <div class="day-strip" id="dayStrip"></div>
+
+  <div class="tabbar">
+    <div class="tab active" data-tab="agenda">Agenda</div>
+    <div class="tab" data-tab="comidas">Comidas</div>
+  </div>
+
+  <main id="main"></main>
+
+  <p class="note" id="notifNote"></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Utilities ---------------- */
+const DOW = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function pad(n){return n.toString().padStart(2,'0');}
+function dateKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function todayDate(){const d=new Date(); d.setHours(0,0,0,0); return d;}
+function parseKey(k){const [y,m,dd]=k.split('-').map(Number); return new Date(y,m-1,dd);}
+
+let selectedDate = todayDate();
+let viewMonth = selectedDate.getMonth();
+let viewYear = selectedDate.getFullYear();
+let currentTab = 'agenda';
+let notifOn = false;
+const scheduledTimers = [];
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* ---------------- Storage helpers (localStorage: funciona standalone/hospedado) ---------------- */
+const STORAGE_PREFIX = 'agenda-valentina:';
+
+function lsGet(key){
+  try{
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    return raw !== null ? raw : null;
+  }catch(e){ return null; }
+}
+function lsSet(key, value){
+  localStorage.setItem(STORAGE_PREFIX + key, value);
+}
+function lsListKeys(prefix){
+  const keys = [];
+  const full = STORAGE_PREFIX + prefix;
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith(full)) keys.push(k.slice(STORAGE_PREFIX.length));
+  }
+  return keys;
+}
+
+async function getDay(key){
+  try{
+    const raw = lsGet(`day:${key}`);
+    return raw ? JSON.parse(raw) : {events:[], reminders:[]};
+  }catch(e){
+    return {events:[], reminders:[]};
+  }
+}
+async function setDay(key, data){
+  try{
+    lsSet(`day:${key}`, JSON.stringify(data));
+    scheduleServerSync();
+  }catch(e){
+    console.error('storage error', e);
+    toast('No se pudo guardar. Intenta de nuevo.');
+  }
+}
+async function getFoodOptions(){
+  try{
+    const raw = lsGet('food-options');
+    return raw ? JSON.parse(raw) : {desayuno:[], snack:[], cena:[]};
+  }catch(e){
+    return {desayuno:[], snack:[], cena:[]};
+  }
+}
+async function setFoodOptions(data){
+  try{ lsSet('food-options', JSON.stringify(data)); }
+  catch(e){ toast('No se pudo guardar.'); }
+}
+async function getFoodToday(key){
+  try{
+    const raw = lsGet(`food-pick:${key}`);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+async function setFoodToday(key, data){
+  try{ lsSet(`food-pick:${key}`, JSON.stringify(data)); }
+  catch(e){ toast('No se pudo guardar.'); }
+}
+
+function uid(){return Math.random().toString(36).slice(2,10);}
+
+/* ---------------- Horario predeterminado (por día de la semana) ---------------- */
+async function getDefaultSchedule(weekday){
+  try{
+    const raw = lsGet(`default:${weekday}`);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+async function setDefaultSchedule(weekday, arr){
+  try{ lsSet(`default:${weekday}`, JSON.stringify(arr)); }
+  catch(e){ toast('No se pudo guardar.'); }
+}
+async function applyDefaultScheduleIfNeeded(key, data, weekday){
+  if(data.events.length || data.defaultApplied) return data;
+  const template = await getDefaultSchedule(weekday);
+  if(!template.length) return data;
+  data.events = template.map(ev=>({
+    id:uid(), nombre:ev.nombre, hora:ev.hora, horaFin:ev.horaFin||null,
+    subtitulos:[], realizado:false, fromDefault:true
+  }));
+  data.defaultApplied = true;
+  await setDay(key, data);
+  return data;
+}
+async function seedMondaySchedule(){
+  const existing = await getDefaultSchedule(1);
+  if(existing.length) return;
+  const items = [
+    {nombre:'Despertar', hora:'06:30', horaFin:null},
+    {nombre:'Ir a la escuela', hora:'07:30', horaFin:'08:00'},
+    {nombre:'Matemáticas', hora:'08:05', horaFin:'08:55'},
+    {nombre:'Física', hora:'09:05', horaFin:'09:55'},
+    {nombre:'Mentoría', hora:'10:05', horaFin:'10:55'},
+    {nombre:'Inglés', hora:'11:05', horaFin:'11:55'},
+    {nombre:'Trabajo oficina', hora:'12:00', horaFin:'15:00'},
+    {nombre:'Estudiar SAT', hora:'16:00', horaFin:'17:30'},
+    {nombre:'Arreglar tocho y salir', hora:'17:30', horaFin:'17:40'},
+    {nombre:'Tocho', hora:'18:05', horaFin:'20:00'}
+  ].map(ev=>({id:uid(), ...ev}));
+  await setDefaultSchedule(1, items);
+}
+
+/* ---------------- Aviso de eventos vencidos ---------------- */
+// En vez de reagendar solo, cuando un evento pasó su hora sin marcarse como
+// realizado, se pregunta qué hacer: marcarlo realizado, re agendarlo o cancelarlo.
+// Se sigue preguntando (al abrir la app y cada pocos minutos) hasta que se resuelva.
+let overduePromptOpen = false;
+
+async function checkOverdueEvents(){
+  if(overduePromptOpen) return;
+  const now = new Date();
+  let keys;
+  try{ keys = lsListKeys('day:'); }catch(e){ return; }
+  if(!keys) return;
+
+  let found = null;
+  let pendingCount = 0;
+  for(const k of keys){
+    const key = k.replace('day:','');
+    let d;
+    try{ d = parseKey(key); } catch(e){ continue; }
+    if(isNaN(d)) continue;
+    const dayData = await getDay(key);
+    if(!dayData.events || !dayData.events.length) continue;
+    for(const ev of dayData.events){
+      const endRef = ev.horaFin || ev.hora;
+      const evEndTime = new Date(`${key}T${endRef}:00`);
+      if(evEndTime < now && !ev.realizado){
+        pendingCount++;
+        if(!found) found = {key, evId: ev.id};
+      }
+    }
+  }
+  if(found) showOverduePrompt(found.key, found.evId, pendingCount);
+}
+
+async function showOverduePrompt(key, evId, pendingCount){
+  const data = await getDay(key);
+  const ev = data.events.find(e=>e.id===evId);
+  if(!ev) return;
+
+  overduePromptOpen = true;
+
+  if('Notification' in window && Notification.permission==='granted'){
+    try{
+      new Notification('¿Qué hacemos con «'+ev.nombre+'»?', {
+        body: `Su horario (${ev.hora}${ev.horaFin? '–'+ev.horaFin:''}) ya pasó y no está marcado como realizado.`
+      });
+    }catch(e){}
+  }
+
+  const countNote = pendingCount>1
+    ? `<p style="font-size:12px;color:var(--muted);margin:0 0 12px;">Tienes ${pendingCount} eventos vencidos en total — te los iré preguntando de a poco, no todos de golpe.</p>`
+    : '';
+
+  showSheet(`
+    <h3>⏰ ${escapeHtml(ev.nombre)}</h3>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin:-8px 0 4px;">
+      ${DOW[parseKey(key).getDay()]} ${parseKey(key).getDate()} de ${MONTHS[parseKey(key).getMonth()]} · ${ev.hora}${ev.horaFin? ' – '+ev.horaFin:''}
+    </p>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 8px;">Su horario ya pasó y no se marcó como realizado. ¿Qué quieres hacer?</p>
+    ${countNote}
+    <div class="sheet-actions" style="flex-direction:column;">
+      <div class="btn primary" style="margin-bottom:8px;" onclick="resolveOverdue('done','${key}','${evId}')">Marcar realizado</div>
+      <div class="btn secondary" style="margin-bottom:8px;" onclick="resolveOverdue('reagendar','${key}','${evId}')">Re agendar</div>
+      <div class="btn cancel" style="margin-bottom:8px;" onclick="resolveOverdue('cancelar','${key}','${evId}')">Cancelar evento</div>
+      <div class="btn" onclick="closeSheet()">Preguntarme después</div>
+    </div>
+  `);
+}
+
+async function resolveOverdue(action, key, evId){
+  if(action==='done'){
+    const data = await getDay(key);
+    const ev = data.events.find(e=>e.id===evId);
+    if(ev) ev.realizado = true;
+    await setDay(key, data);
+    closeSheet();
+    toast('Marcado como realizado');
+    renderAgenda();
+    setTimeout(checkOverdueEvents, 400);
+  } else if(action==='reagendar'){
+    overduePromptOpen = false; // openReagendar abre su propio flujo de hoja
+    openReagendar(key, evId);
+  } else if(action==='cancelar'){
+    overduePromptOpen = false;
+    confirmCancelEvent(key, evId);
+  }
+}
+
+
+/* ---------------- Notificaciones ---------------- */
+function updateNotifUI(){
+  const bell = document.getElementById('bellBtn');
+  const note = document.getElementById('notifNote');
+  if(notifOn){
+    bell.classList.add('on');
+    note.textContent = 'Notificaciones activas: llegan 5 min antes y al empezar cada evento, mientras tengas esta app abierta o en segundo plano reciente en tu teléfono.';
+  } else if(isIOS() && !isStandaloneApp()){
+    bell.classList.remove('on');
+    note.textContent = 'En iPhone: agrega esta app a tu pantalla de inicio (Compartir → Agregar a pantalla de inicio) y ábrela desde ahí para poder activar notificaciones.';
+  } else {
+    bell.classList.remove('on');
+    note.textContent = 'Activa las notificaciones con el ícono de la campana para recibir avisos de tus eventos.';
+  }
+}
+
+function isStandaloneApp(){
+  return window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+}
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+async function toggleNotifs(){
+  if(!('Notification' in window)){
+    if(isIOS() && !isStandaloneApp()){
+      showSheet(`
+        <h3>Falta un paso en iPhone</h3>
+        <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 16px;">
+          En iPhone, las notificaciones solo funcionan si esta app está agregada a tu pantalla de inicio y la abres desde ese ícono — no desde una pestaña de Safari.<br><br>
+          Toca el ícono de Compartir de Safari → "Agregar a pantalla de inicio", y luego ábrela desde ahí.
+        </p>
+        <div class="sheet-actions">
+          <div class="btn primary" onclick="closeSheet()">Entendido</div>
+        </div>
+      `);
+    } else {
+      toast('Tu navegador no soporta notificaciones.');
+    }
+    return;
+  }
+  if(Notification.permission === 'granted'){
+    notifOn = !notifOn;
+    updateNotifUI();
+    if(notifOn){
+      scheduleTodayNotifications();
+      subscribeToPush();
+    }
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm === 'granted'){
+    notifOn = true;
+    updateNotifUI();
+    scheduleTodayNotifications();
+    subscribeToPush();
+  } else {
+    toast('Permiso de notificaciones no concedido.');
+  }
+}
+
+/* ---------------- Notificaciones push reales (llegan aunque la app esté cerrada) ---------------- */
+const VAPID_PUBLIC_KEY = 'BDv5ZIvGuUc_pNrSV1j9UpTA_zuW00BEblIrb8AHiMk4WElpKb2J9dnMe5r7McQQ3zdKFTBqW5wEcuVn8cNrbQk';
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i=0;i<rawData.length;i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return null;
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    return reg;
+  }catch(e){
+    console.error('No se pudo registrar el service worker', e);
+    return null;
+  }
+}
+
+async function subscribeToPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    await fetch('/.netlify/functions/subscribe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(sub)
+    });
+    scheduleServerSync(true);
+  }catch(e){
+    console.error('No se pudo suscribir a notificaciones push', e);
+  }
+}
+
+let serverSyncTimer = null;
+function scheduleServerSync(immediate){
+  if(serverSyncTimer) clearTimeout(serverSyncTimer);
+  serverSyncTimer = setTimeout(syncEventsToServer, immediate ? 0 : 2000);
+}
+
+async function syncEventsToServer(){
+  try{
+    const keys = lsListKeys('day:');
+    if(!keys) return;
+    const today = todayDate();
+    const events = [];
+    for(const k of keys){
+      const key = k.replace('day:','');
+      let d;
+      try{ d = parseKey(key); } catch(e){ continue; }
+      if(isNaN(d)) continue;
+      const diffDays = Math.round((d - today) / 86400000);
+      if(diffDays < 0 || diffDays > 30) continue; // solo próximos 30 días
+      const dayData = await getDay(key);
+      (dayData.events||[]).forEach(ev=>{
+        if(ev.realizado) return;
+        events.push({id: ev.id, nombre: ev.nombre, key, hora: ev.hora, horaFin: ev.horaFin || null});
+      });
+    }
+    await fetch('/.netlify/functions/sync-events', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({events})
+    });
+  }catch(e){
+    console.error('No se pudo sincronizar con el servidor', e);
+  }
+}
+
+async function scheduleTodayNotifications(){
+  scheduledTimers.forEach(t=>clearTimeout(t));
+  scheduledTimers.length = 0;
+  if(!notifOn) return;
+  const key = dateKey(todayDate());
+  const data = await getDay(key);
+  const now = new Date();
+  data.events.forEach(ev=>{
+    const evTime = new Date(`${key}T${ev.hora}:00`);
+    const fiveBefore = new Date(evTime.getTime() - 5*60000);
+    if(fiveBefore > now && !ev.realizado){
+      scheduledTimers.push(setTimeout(()=>{
+        new Notification('En 5 minutos: ' + ev.nombre, {body: `${ev.hora}${ev.horaFin? ' – '+ev.horaFin : ''}`});
+      }, fiveBefore - now));
+    }
+    if(evTime > now && !ev.realizado){
+      scheduledTimers.push(setTimeout(()=>{
+        new Notification('Ahora: ' + ev.nombre, {body: ev.subtitulos && ev.subtitulos[0] ? ev.subtitulos[0] : ''});
+      }, evTime - now));
+    }
+  });
+}
+
+/* ---------------- Render: day strip ---------------- */
+function renderDayStrip(){
+  document.getElementById('monthLabel').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+  const strip = document.getElementById('dayStrip');
+  strip.innerHTML = '';
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const today = todayDate();
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(viewYear, viewMonth, day);
+    const pill = document.createElement('div');
+    pill.className = 'day-pill';
+    if(d.getTime()===today.getTime()) pill.classList.add('today');
+    if(d.getTime()===selectedDate.getTime()) pill.classList.add('selected');
+    pill.textContent = day;
+    pill.onclick = ()=>{ selectedDate = d; renderAll(); scrollSelectedIntoView(); };
+    strip.appendChild(pill);
+  }
+}
+function scrollSelectedIntoView(){
+  const strip = document.getElementById('dayStrip');
+  const idx = selectedDate.getDate()-1;
+  const el = strip.children[idx];
+  if(el) el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+
+/* ---------------- Render: Agenda tab ---------------- */
+async function renderAgenda(){
+  const main = document.getElementById('main');
+  const key = dateKey(selectedDate);
+  const weekday = selectedDate.getDay();
+  let data = await getDay(key);
+  data = await applyDefaultScheduleIfNeeded(key, data, weekday);
+
+  const headerStr = `${DOW[weekday]} ${selectedDate.getDate()} de ${MONTHS[selectedDate.getMonth()]}`;
+  const template = await getDefaultSchedule(weekday);
+
+  let html = `<div class="section-title">${headerStr}</div>`;
+  html += renderDefaultScheduleBox(weekday, template.length>0);
+  html += renderTimeline(data.events, key);
+  html += `<button class="add-event-btn" onclick="openAddEvent()">+ Agregar evento</button>`;
+
+  html += `<div class="section-title">Recordatorios de hoy</div>`;
+  if(!data.reminders.length){
+    html += `<div class="empty">Sin recordatorios para este día.</div>`;
+  } else {
+    data.reminders.forEach(r=>{
+      html += `
+      <div class="reminder ${r.done?'checked':''}">
+        <input type="checkbox" ${r.done?'checked':''} onchange="toggleReminder('${key}','${r.id}')">
+        <span>${escapeHtml(r.texto)}</span>
+      </div>`;
+    });
+  }
+  html += `<div class="mini-add">
+      <input id="newReminderInput" maxlength="120" placeholder="Agregar recordatorio…">
+      <button onclick="addReminder('${key}')">+</button>
+    </div>`;
+
+  main.innerHTML = html;
+}
+
+/* ---------------- Timeline ---------------- */
+function renderDefaultScheduleBox(weekday, hasTemplate){
+  return `<div class="default-box">
+    <div class="default-box-label">Horario predeterminado · ${DOW[weekday]}</div>
+    <div class="default-box-actions">
+      <div class="dbtn" onclick="openAddDefaultEvent(${weekday})">+ Agregar</div>
+      ${hasTemplate ? `<div class="dbtn" onclick="openAdjustDefault(${weekday})">Ajustar</div>` : ''}
+      ${hasTemplate ? `<div class="dbtn warn" onclick="confirmQuitarDefault(${weekday})">Quitar</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function openAddDefaultEvent(weekday){
+  showSheet(`
+    <h3>Agregar a horario predeterminado</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin:-8px 0 14px;">Se aplicará automáticamente cada ${DOW[weekday].toLowerCase()} que no tenga ya eventos.</p>
+    <div class="field">
+      <label>Nombre</label>
+      <input type="text" id="defNombre" maxlength="60" placeholder="Nombre del evento">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Hora inicio</label>
+        <input type="time" id="defHora" value="08:00">
+      </div>
+      <div class="field">
+        <label>Hora fin (opcional)</label>
+        <input type="time" id="defHoraFin">
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Cancelar</div>
+      <div class="btn primary" onclick="confirmAddDefaultEvent(${weekday})">Agregar</div>
+    </div>
+  `);
+}
+function markFieldError(id){
+  const el = document.getElementById(id);
+  if(el){
+    el.classList.add('field-error');
+    el.addEventListener('input', ()=> el.classList.remove('field-error'), {once:true});
+  }
+}
+
+async function confirmAddDefaultEvent(weekday){
+  const nombre = document.getElementById('defNombre').value.trim();
+  const hora = document.getElementById('defHora').value;
+  const horaFin = document.getElementById('defHoraFin').value;
+  if(!nombre){ toast('Falta el nombre.'); markFieldError('defNombre'); return; }
+  if(!hora){ toast('Falta la hora — tócala y elige una.'); markFieldError('defHora'); return; }
+  if(horaFin && horaFin<=hora){ toast('La hora fin debe ser después de la hora inicio.'); markFieldError('defHoraFin'); return; }
+  const arr = await getDefaultSchedule(weekday);
+  arr.push({id:uid(), nombre, hora, horaFin: horaFin||null});
+  await setDefaultSchedule(weekday, arr);
+
+  // Copia el evento nuevo a todos los días de este mismo día de la semana (desde hoy
+  // hacia adelante, próximos 60 días) que ya tenían el horario predeterminado aplicado —
+  // así no hace falta esperar a visitarlos uno por uno para que lo reciban.
+  let touchedToday = false;
+  const start = todayDate();
+  for(let i=0; i<=60; i++){
+    const d = new Date(start);
+    d.setDate(d.getDate()+i);
+    if(d.getDay() !== weekday) continue;
+    const key = dateKey(d);
+    const data = await getDay(key);
+    if(!data.defaultApplied) continue; // aún no visitado: ya lo recibirá completo al abrirlo
+    const alreadyThere = data.events.some(e=> e.nombre===nombre && e.hora===hora);
+    if(alreadyThere) continue;
+    data.events.push({id:uid(), nombre, hora, horaFin: horaFin||null, subtitulos:[], realizado:false, fromDefault:true});
+    await setDay(key, data);
+    if(key===dateKey(todayDate())) touchedToday = true;
+  }
+  if(touchedToday) scheduleTodayNotifications();
+
+  closeSheet();
+  toast('Agregado al horario predeterminado');
+  renderAgenda();
+}
+
+async function openAdjustDefault(weekday){
+  const arr = await getDefaultSchedule(weekday);
+  const sorted = [...arr].sort((a,b)=>a.hora.localeCompare(b.hora));
+  let rows = sorted.map(ev=>`
+    <div class="default-row">
+      <div>
+        <div class="default-row-name">${escapeHtml(ev.nombre)}</div>
+        <div class="default-row-time">${ev.hora}${ev.horaFin? ' – '+ev.horaFin:''}</div>
+      </div>
+      <span class="rm" onclick="removeDefaultEvent(${weekday},'${ev.id}')">✕</span>
+    </div>`).join('');
+  if(!sorted.length) rows = `<div class="empty">Sin eventos en este horario predeterminado.</div>`;
+  showSheet(`
+    <h3>Ajustar horario predeterminado</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin:-8px 0 14px;">${DOW[weekday]}</p>
+    ${rows}
+    <div class="sheet-actions">
+      <div class="btn primary" onclick="closeSheet()">Listo</div>
+    </div>
+  `);
+}
+async function removeDefaultEvent(weekday, id){
+  const arr = await getDefaultSchedule(weekday);
+  const next = arr.filter(e=>e.id!==id);
+  await setDefaultSchedule(weekday, next);
+  toast('Eliminado del horario predeterminado');
+  openAdjustDefault(weekday);
+  renderAgenda();
+}
+
+function confirmQuitarDefault(weekday){
+  showSheet(`
+    <h3>¿Quitar horario predeterminado?</h3>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 16px;">Se eliminará el horario predeterminado de los ${DOW[weekday].toLowerCase()}. Los días que ya lo tengan aplicado no cambian, solo dejará de aplicarse a los ${DOW[weekday].toLowerCase()} futuros que aún no tengan eventos.</p>
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Volver</div>
+      <div class="btn cancel" onclick="quitarDefault(${weekday})">Sí, quitar</div>
+    </div>
+  `);
+}
+async function quitarDefault(weekday){
+  await setDefaultSchedule(weekday, []);
+  closeSheet();
+  toast('Horario predeterminado eliminado');
+  renderAgenda();
+}
+
+function timeToMinutes(t){
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+function minutesTo12h(mins){
+  let h = Math.floor(mins/60);
+  const m = mins%60;
+  const ampm = h>=12 ? 'PM' : 'AM';
+  h = h%12; if(h===0) h=12;
+  return `${h}:${pad(m)} ${ampm}`;
+}
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// Agrupa eventos que se traslapan en el tiempo y les asigna columnas
+// (como un calendario), para que no se dibujen encimados.
+function layoutOverlaps(events){
+  const items = events.map(ev=>{
+    const start = timeToMinutes(ev.hora);
+    const hasRange = !!ev.horaFin;
+    const end = hasRange ? timeToMinutes(ev.horaFin) : start + 22;
+    return {ev, start, end: Math.max(end, start+1)};
+  }).sort((a,b)=> a.start-b.start || a.end-b.end);
+
+  const clusters = [];
+  let current = [];
+  let currentEnd = -Infinity;
+  items.forEach(item=>{
+    if(current.length && item.start < currentEnd){
+      current.push(item);
+      currentEnd = Math.max(currentEnd, item.end);
+    } else {
+      if(current.length) clusters.push(current);
+      current = [item];
+      currentEnd = item.end;
+    }
+  });
+  if(current.length) clusters.push(current);
+
+  const layout = [];
+  clusters.forEach(cluster=>{
+    const columnsEnd = [];
+    cluster.forEach(item=>{
+      let placed = false;
+      for(let c=0;c<columnsEnd.length;c++){
+        if(columnsEnd[c] <= item.start){
+          item.col = c;
+          columnsEnd[c] = item.end;
+          placed = true;
+          break;
+        }
+      }
+      if(!placed){
+        item.col = columnsEnd.length;
+        columnsEnd.push(item.end);
+      }
+    });
+    const totalCols = columnsEnd.length;
+    cluster.forEach(item=> layout.push({...item, cols: totalCols}));
+  });
+  return layout;
+}
+
+function renderTimeline(events, key){
+  const PX_PER_HOUR = 62;
+  let startHour = 6, endHour = 21;
+  events.forEach(ev=>{
+    const sH = Math.floor(timeToMinutes(ev.hora)/60);
+    const eMin = ev.horaFin ? timeToMinutes(ev.horaFin) : timeToMinutes(ev.hora)+30;
+    const eH = Math.ceil(eMin/60);
+    if(sH < startHour) startHour = sH;
+    if(eH > endHour) endHour = eH;
+  });
+  const totalHours = endHour - startHour + 1;
+  const baseMin = startHour*60;
+
+  let hoursHtml = '';
+  for(let h=startHour; h<=endHour; h++){
+    hoursHtml += `<div class="tl-hour" style="height:${PX_PER_HOUR}px;">
+      <div class="tl-hour-label">${minutesTo12h(h*60)}</div>
+      <div class="tl-hour-line"></div>
+    </div>`;
+  }
+
+  const layout = layoutOverlaps(events);
+  const GAP = 4;
+  let eventsHtml = '';
+  layout.forEach(item=>{
+    const ev = item.ev;
+    const startMin = item.start;
+    const hasRange = !!ev.horaFin;
+    const endMin = item.end;
+    const top = ((startMin - baseMin)/60)*PX_PER_HOUR;
+    const rawHeight = hasRange ? ((endMin-startMin)/60)*PX_PER_HOUR : 26;
+    const height = Math.max(rawHeight, hasRange ? 30 : 26);
+    const isCompact = hasRange && height < 34;
+
+    const widthPct = 100/item.cols;
+    const leftPct = item.col*widthPct;
+    const posStyle = `top:${top}px; height:${height}px; left:calc(${leftPct}% + ${item.col===0?4:GAP/2}px); width:calc(${widthPct}% - ${item.cols>1?GAP:8}px);`;
+
+    const cls = ['tl-event'];
+    if(ev.realizado) cls.push('done');
+    if(!hasRange) cls.push('point short');
+    if(isCompact) cls.push('compact');
+    const safeName = escapeHtml(ev.nombre);
+    const timeLabel = hasRange ? `${minutesTo12h(startMin)} – ${minutesTo12h(endMin)}` : minutesTo12h(startMin);
+    if(!hasRange){
+      eventsHtml += `<div class="${cls.join(' ')}" style="${posStyle}" onclick="openEventDetail('${key}','${ev.id}')" title="${safeName}">
+        <span class="tl-inline-time">${timeLabel}</span>
+        <span class="tl-name">${safeName}</span>
+      </div>`;
+    } else {
+      eventsHtml += `<div class="${cls.join(' ')}" style="${posStyle}" onclick="openEventDetail('${key}','${ev.id}')" title="${safeName} · ${timeLabel}">
+        <div class="tl-name">${safeName}</div>
+        <div class="tl-time">${timeLabel}</div>
+      </div>`;
+    }
+  });
+
+  const totalHeight = totalHours*PX_PER_HOUR;
+  return `<div class="timeline">
+    <div class="tl-hours">${hoursHtml}</div>
+    <div class="tl-events-layer" style="height:${totalHeight}px;">${eventsHtml}</div>
+  </div>`;
+}
+
+async function openEventDetail(key, evId){
+  const html = await buildEventDetailHtml(key, evId);
+  showSheet(html);
+}
+async function refreshAfterEventChange(key, evId, keepSheetOpen){
+  await renderAgenda();
+  if(keepSheetOpen){
+    const data = await getDay(key);
+    const stillExists = data.events.some(e=>e.id===evId);
+    if(stillExists){
+      const overlay = document.getElementById('overlay');
+      if(overlay && overlay.style.display==='flex'){
+        overlay.innerHTML = `<div class="sheet">${await buildEventDetailHtml(key, evId)}</div>`;
+      }
+    } else {
+      closeSheet();
+    }
+  }
+}
+
+async function buildEventDetailHtml(key, evId){
+  const data = await getDay(key);
+  const ev = data.events.find(e=>e.id===evId);
+  if(!ev) return '';
+  return `<h3>${escapeHtml(ev.nombre)}</h3>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin:-8px 0 14px;">
+      ${ev.hora}${ev.horaFin? ' – '+ev.horaFin : ''}${ev.reagendado? ' · reagendado':''}
+    </p>
+    ${renderEventBody(ev, key)}
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Cerrar</div>
+    </div>`;
+}
+function renderEventBody(ev, key){
+  let html = `<div class="event-body">`;
+  const subs = ev.subtitulos || [];
+  if(subs.length){
+    html += `<ul class="sub-list">`;
+    subs.forEach(s=>{
+      html += `<li>${escapeHtml(s.texto)}
+        <ul class="spec-list">${(s.especificaciones||[]).map(sp=>`<li>${sp}</li>`).join('')}</ul>
+        <div class="mini-add">
+          <input id="specInput-${ev.id}-${s.id}" maxlength="120" placeholder="Agregar especificación de «${s.texto}»…">
+          <button onclick="addSpec('${key}','${ev.id}','${s.id}')">+</button>
+        </div>
+      </li>`;
+    });
+    html += `</ul>`;
+  }
+  html += `<div class="mini-add">
+      <input id="subInput-${ev.id}" maxlength="80" placeholder="Agregar subtítulo…">
+      <button onclick="addSub('${key}','${ev.id}')">+</button>
+    </div>
+    <div class="event-actions">
+      <div class="btn primary" onclick="markDone('${key}','${ev.id}')">${ev.realizado? 'Realizado ✓':'Marcar realizado'}</div>
+      <div class="btn secondary" onclick="openReagendar('${key}','${ev.id}')">Re agendar</div>
+    </div>
+    <div class="event-actions">
+      <div class="btn cancel" onclick="confirmCancelEvent('${key}','${ev.id}')">Cancelar evento</div>
+    </div>`;
+  html += `</div>`;
+  return html;
+}
+
+async function toggleReminder(key, id){
+  const data = await getDay(key);
+  const r = data.reminders.find(x=>x.id===id);
+  if(r) r.done = !r.done;
+  await setDay(key, data);
+  renderAgenda();
+}
+async function addReminder(key){
+  const input = document.getElementById('newReminderInput');
+  const val = input.value.trim();
+  if(!val) return;
+  const data = await getDay(key);
+  data.reminders.push({id:uid(), texto:val, done:false});
+  await setDay(key, data);
+  renderAgenda();
+}
+
+async function addSub(key, evId){
+  const input = document.getElementById(`subInput-${evId}`);
+  const val = input.value.trim();
+  if(!val) return;
+  const data = await getDay(key);
+  const ev = data.events.find(e=>e.id===evId);
+  ev.subtitulos = ev.subtitulos || [];
+  ev.subtitulos.push({id:uid(), texto:val, especificaciones:[]});
+  await setDay(key, data);
+  refreshAfterEventChange(key, evId, true);
+}
+async function addSpec(key, evId, subId){
+  const input = document.getElementById(`specInput-${evId}-${subId}`);
+  const val = input.value.trim();
+  if(!val) return;
+  const data = await getDay(key);
+  const ev = data.events.find(e=>e.id===evId);
+  const sub = (ev.subtitulos||[]).find(s=>s.id===subId);
+  if(!sub) return;
+  sub.especificaciones = sub.especificaciones || [];
+  sub.especificaciones.push(val);
+  await setDay(key, data);
+  refreshAfterEventChange(key, evId, true);
+}
+async function markDone(key, evId){
+  const data = await getDay(key);
+  const ev = data.events.find(e=>e.id===evId);
+  ev.realizado = !ev.realizado;
+  await setDay(key, data);
+  toast(ev.realizado? 'Marcado como realizado' : 'Desmarcado');
+  refreshAfterEventChange(key, evId, true);
+}
+function confirmCancelEvent(key, evId){
+  showSheet(`
+    <h3>¿Cancelar este evento?</h3>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 16px;">Se eliminará por completo de tu agenda. Esto no se puede deshacer.</p>
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Volver</div>
+      <div class="btn cancel" onclick="cancelEvent('${key}','${evId}')">Sí, cancelar evento</div>
+    </div>
+  `);
+}
+async function cancelEvent(key, evId){
+  const data = await getDay(key);
+  data.events = data.events.filter(e=>e.id!==evId);
+  await setDay(key, data);
+  closeSheet();
+  toast('Evento cancelado');
+  if(key===dateKey(todayDate())) scheduleTodayNotifications();
+  renderAgenda();
+  setTimeout(checkOverdueEvents, 400);
+}
+
+async function openReagendar(key, evId){
+  const data = await getDay(key);
+  const ev = data.events.find(e=>e.id===evId);
+  if(!ev) return;
+  const defaultDate = dateKey(new Date(parseKey(key).getTime()+86400000)); // sugiere el día siguiente
+  showSheet(`
+    <h3>Re agendar evento</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin:-8px 0 12px;">Elige una fecha y toca uno de los horarios libres.</p>
+    <div class="field">
+      <label>Fecha</label>
+      <input type="date" id="reagDate" value="${defaultDate}" onchange="renderReagendarSlots('${key}','${evId}')">
+    </div>
+    <div id="reagSlots"></div>
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Cancelar</div>
+    </div>
+  `);
+  renderReagendarSlots(key, evId);
+}
+
+function eventDurationMinutes(ev){
+  if(ev.horaFin){
+    const d = timeToMinutes(ev.horaFin) - timeToMinutes(ev.hora);
+    return d>0 ? d : 30;
+  }
+  return 30;
+}
+
+async function renderReagendarSlots(key, evId){
+  const container = document.getElementById('reagSlots');
+  if(!container) return;
+  container.innerHTML = `<p style="font-size:12.5px;color:var(--muted);">Buscando horarios libres…</p>`;
+
+  const dateInput = document.getElementById('reagDate');
+  const targetDate = dateInput.value;
+  if(!targetDate) return;
+
+  const originData = await getDay(key);
+  const ev = originData.events.find(e=>e.id===evId);
+  if(!ev){ container.innerHTML = ''; return; }
+  const duration = eventDurationMinutes(ev);
+
+  const targetData = await getDay(targetDate);
+  const others = targetData.events.filter(e=> !(targetDate===key && e.id===evId));
+  const busy = others.map(e=>{
+    const start = timeToMinutes(e.hora);
+    const end = e.horaFin ? timeToMinutes(e.horaFin) : start+30;
+    return [start,end];
+  });
+
+  const DAY_START = 6*60, DAY_END = 22*60, STEP = 15;
+  const slots = [];
+  for(let t=DAY_START; t+duration<=DAY_END; t+=STEP){
+    const clash = busy.some(([bStart,bEnd]) => t < bEnd && (t+duration) > bStart);
+    if(!clash) slots.push(t);
+  }
+
+  if(!slots.length){
+    container.innerHTML = `<div class="empty">No hay horarios libres ese día para la duración de este evento (${duration} min). Prueba otra fecha.</div>`;
+    return;
+  }
+
+  // Agrupar visualmente por mañana / tarde / noche para que la lista no sea eterna
+  const groups = [
+    {label:'Mañana', from:0, to:12*60},
+    {label:'Tarde', from:12*60, to:18*60},
+    {label:'Noche', from:18*60, to:24*60}
+  ];
+  let html = '';
+  groups.forEach(g=>{
+    const inGroup = slots.filter(t=>t>=g.from && t<g.to);
+    if(!inGroup.length) return;
+    html += `<div class="food-col-title">${g.label}</div><div class="slot-grid">`;
+    inGroup.forEach(t=>{
+      const label = minutesTo12h(t);
+      html += `<div class="slot-btn" onclick="pickReagendarSlot('${key}','${evId}','${targetDate}',${t},${duration})">${label}</div>`;
+    });
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function pickReagendarSlot(key, evId, targetDate, startMin, duration){
+  const data = await getDay(key);
+  const idx = data.events.findIndex(e=>e.id===evId);
+  if(idx===-1) return;
+  const ev = data.events[idx];
+  data.events.splice(idx,1);
+  await setDay(key, data);
+
+  const startH = pad(Math.floor(startMin/60));
+  const startM = pad(startMin%60);
+  const endMin = startMin+duration;
+  const endH = pad(Math.floor(endMin/60));
+  const endM = pad(endMin%60);
+
+  ev.hora = `${startH}:${startM}`;
+  ev.horaFin = ev.horaFin ? `${endH}:${endM}` : null;
+  ev.reagendado = true;
+  ev.realizado = false;
+
+  const target = await getDay(targetDate);
+  target.events.push(ev);
+  await setDay(targetDate, target);
+
+  closeSheet();
+  toast('Evento re agendado');
+  if(targetDate===dateKey(todayDate()) || key===dateKey(todayDate())) scheduleTodayNotifications();
+  renderAgenda();
+  setTimeout(checkOverdueEvents, 400);
+}
+
+
+/* ---------------- Add event sheet ---------------- */
+function openAddEvent(){
+  const key = dateKey(selectedDate);
+  showSheet(`
+    <h3>Agregar evento</h3>
+    <div class="field">
+      <label>Nombre</label>
+      <input type="text" id="evNombre" maxlength="60" placeholder="Nombre del evento">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Hora inicio</label>
+        <input type="time" id="evHora" value="08:00">
+      </div>
+      <div class="field">
+        <label>Hora fin (opcional)</label>
+        <input type="time" id="evHoraFin">
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Cancelar</div>
+      <div class="btn primary" onclick="confirmAddEvent('${key}')">Agregar</div>
+    </div>
+  `);
+}
+async function confirmAddEvent(key){
+  const nombre = document.getElementById('evNombre').value.trim();
+  const hora = document.getElementById('evHora').value;
+  const horaFin = document.getElementById('evHoraFin').value;
+  if(!nombre){ toast('Falta el nombre.'); markFieldError('evNombre'); return; }
+  if(!hora){ toast('Falta la hora — tócala y elige una.'); markFieldError('evHora'); return; }
+  if(horaFin && horaFin<=hora){ toast('La hora fin debe ser después de la hora inicio.'); markFieldError('evHoraFin'); return; }
+  const data = await getDay(key);
+  data.events.push({id:uid(), nombre, hora, horaFin: horaFin||null, subtitulos:[], realizado:false});
+  await setDay(key, data);
+  closeSheet();
+  toast('Evento agregado');
+  if(key===dateKey(todayDate())) scheduleTodayNotifications();
+  renderAgenda();
+}
+
+/* ---------------- Sheet helpers ---------------- */
+function showSheet(innerHtml){
+  let overlay = document.getElementById('overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'overlay';
+    overlay.className = 'overlay';
+    overlay.onclick = (e)=>{ if(e.target===overlay) closeSheet(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div class="sheet">${innerHtml}</div>`;
+  overlay.style.display = 'flex';
+}
+function closeSheet(){
+  const overlay = document.getElementById('overlay');
+  if(overlay) overlay.style.display = 'none';
+  overduePromptOpen = false;
+}
+
+/* ---------------- Comidas tab ---------------- */
+async function renderComidas(){
+  const main = document.getElementById('main');
+  const key = dateKey(selectedDate);
+  const opts = await getFoodOptions();
+  let pick = await getFoodToday(key);
+  if(!pick){
+    pick = await rerollPick(key, opts, false);
+  }
+
+  const pickRow = (label, item, mealType)=>{
+    if(!item) return `<div class="rec-row"><span>${label}</span><b>—</b></div>`;
+    return `<div class="rec-row rec-row-clickable" onclick="viewPickRecipe('${key}','${mealType}')"><span>${label}</span><b>${escapeHtml(item.nombre)} <span class="rec-view">ver receta ›</span></b></div>`;
+  };
+
+  let html = `<div class="rec-card">
+    <p class="eyebrow">recomendación para ${selectedDate.getTime()===todayDate().getTime()?'hoy':'este día'}</p>
+    ${pickRow('Desayuno', pick.desayuno, 'desayuno')}
+    ${pickRow('Snack', pick.snack, 'snack')}
+    ${pickRow('Cena', pick.cena, 'cena')}
+    <button class="reroll" onclick="rerollAndRender('${key}')">Cambiar opciones</button>
+  </div>`;
+
+  html += renderFoodColumn('Desayuno','desayuno',opts.desayuno);
+  html += renderFoodColumn('Snack','snack',opts.snack);
+  html += renderFoodColumn('Cena','cena',opts.cena);
+
+  main.innerHTML = html;
+}
+function renderFoodColumn(label, field, items){
+  let html = `<div class="food-col-title">${label}</div>`;
+  if(!items.length){
+    html += `<div class="empty">Sin opciones todavía.</div>`;
+  } else {
+    items.forEach((it,i)=>{
+      html += `<div class="food-opt">
+        <span onclick="viewRecipeAt('${field}',${i})">${escapeHtml(it.nombre)} <span class="rec-view">ver receta ›</span></span>
+        <span class="rm" onclick="removeFoodOpt('${field}',${i})">✕</span>
+      </div>`;
+    });
+  }
+  html += `<button class="add-food-btn" onclick="openAddFoodOption('${field}','${label}')">+ Agregar opción de ${label.toLowerCase()}</button>`;
+  return html;
+}
+function openAddFoodOption(field, label){
+  showSheet(`
+    <h3>Nueva opción de ${label.toLowerCase()}</h3>
+    <div class="field">
+      <label>Nombre del platillo</label>
+      <input type="text" id="foodNombre" maxlength="60" placeholder="ej. Huevos con verduras">
+    </div>
+    <div class="field">
+      <label>Receta (obligatoria)</label>
+      <textarea id="foodReceta" maxlength="2000" rows="5" placeholder="Ingredientes y pasos para prepararlo…" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Inter',sans-serif;background:var(--paper);resize:vertical;"></textarea>
+    </div>
+    <div class="sheet-actions">
+      <div class="btn" onclick="closeSheet()">Cancelar</div>
+      <div class="btn primary" onclick="confirmAddFoodOption('${field}')">Agregar</div>
+    </div>
+  `);
+}
+async function confirmAddFoodOption(field){
+  const nombre = document.getElementById('foodNombre').value.trim();
+  const receta = document.getElementById('foodReceta').value.trim();
+  if(!nombre || !receta){ toast('El nombre y la receta son obligatorios.'); return; }
+  const opts = await getFoodOptions();
+  opts[field].push({id:uid(), nombre, receta});
+  await setFoodOptions(opts);
+  closeSheet();
+  toast('Opción agregada');
+  renderComidas();
+}
+async function removeFoodOpt(field, idx){
+  const opts = await getFoodOptions();
+  opts[field].splice(idx,1);
+  await setFoodOptions(opts);
+  renderComidas();
+}
+function viewRecipe(nombre, receta){
+  showSheet(`
+    <h3>${escapeHtml(nombre)}</h3>
+    <p style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.5;margin:0 0 16px;">${escapeHtml(receta)}</p>
+    <div class="sheet-actions">
+      <div class="btn primary" onclick="closeSheet()">Cerrar</div>
+    </div>
+  `);
+}
+async function viewRecipeAt(field, idx){
+  const opts = await getFoodOptions();
+  const it = opts[field][idx];
+  if(!it) return;
+  viewRecipe(it.nombre, it.receta);
+}
+async function viewPickRecipe(key, mealType){
+  const pick = await getFoodToday(key);
+  const item = pick && pick[mealType];
+  if(!item) return;
+  viewRecipe(item.nombre, item.receta);
+}
+function randomFrom(arr){
+  if(!arr || !arr.length) return null;
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+async function rerollPick(key, opts, save=true){
+  const pick = {
+    desayuno: randomFrom(opts.desayuno),
+    snack: randomFrom(opts.snack),
+    cena: randomFrom(opts.cena)
+  };
+  await setFoodToday(key, pick);
+  return pick;
+}
+async function rerollAndRender(key){
+  const opts = await getFoodOptions();
+  await rerollPick(key, opts, true);
+  toast('Nuevas opciones elegidas');
+  renderComidas();
+}
+
+/* ---------------- Tabs / global render ---------------- */
+function renderTabs(){
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.tab===currentTab);
+    t.onclick = ()=>{ currentTab = t.dataset.tab; renderTabs(); renderMain(); };
+  });
+}
+function renderMain(){
+  if(currentTab==='agenda') renderAgenda();
+  else renderComidas();
+}
+function renderAll(){
+  renderDayStrip();
+  renderTabs();
+  renderMain();
+}
+
+document.getElementById('prevMonth').onclick = ()=>{
+  viewMonth--; if(viewMonth<0){viewMonth=11; viewYear--;}
+  renderDayStrip();
+};
+document.getElementById('nextMonth').onclick = ()=>{
+  viewMonth++; if(viewMonth>11){viewMonth=0; viewYear++;}
+  renderDayStrip();
+};
+document.getElementById('bellBtn').onclick = toggleNotifs;
+
+/* ---------------- Init ---------------- */
+function storageIsAvailable(){
+  try{
+    const testKey = STORAGE_PREFIX + '__test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+function showStorageWarning(){
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:200;background:#4F1F1F;color:#fff;font-size:12.5px;text-align:center;padding:10px 16px;line-height:1.4;';
+  banner.textContent = 'Este navegador no permite guardar datos aquí (ej. modo privado de Safari). Nada de lo que agregues se va a conservar — abre la app en una ventana normal.';
+  document.body.prepend(banner);
+}
+
+(async function init(){
+  if(!storageIsAvailable()){
+    showStorageWarning();
+  }
+  updateNotifUI();
+  await seedMondaySchedule();
+  renderAll();
+  scrollSelectedIntoView();
+  registerServiceWorker();
+  if('Notification' in window && Notification.permission==='granted'){
+    notifOn = true;
+    updateNotifUI();
+    scheduleTodayNotifications();
+    subscribeToPush();
+  }
+  setTimeout(checkOverdueEvents, 800);
+  setInterval(checkOverdueEvents, 3*60*1000);
+})();
+</script>
+</body>
+</html>
