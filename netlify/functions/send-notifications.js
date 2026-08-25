@@ -12,10 +12,11 @@ webpush.setVapidDetails(
 // sirve (el usuario desinstaló la app o revocó el permiso), para poder limpiarla.
 async function sendPush(subscription, title, body) {
   try {
-    await webpush.sendNotification(subscription, JSON.stringify({ title, body }));
+    const result = await webpush.sendNotification(subscription, JSON.stringify({ title, body }));
+    console.log('PUSH ACEPTADO POR APPLE — statusCode:', result.statusCode, 'headers:', JSON.stringify(result.headers));
     return true;
   } catch (e) {
-    console.error('Error enviando push:', e.message);
+    console.error('PUSH RECHAZADO — statusCode:', e.statusCode, 'mensaje:', e.message, 'body:', e.body);
     if (e.statusCode === 404 || e.statusCode === 410) return 'expired';
     return false;
   }
