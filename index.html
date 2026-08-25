@@ -788,19 +788,48 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'),3200);
 }
 
-/* ---------------- Storage helpers (localStorage: funciona standalone/hospedado) ---------------- */
+/* ---------------- Storage helpers ----------------
+   Cada dispositivo escribe primero en localStorage (rápido, funciona sin conexión)
+   y al mismo tiempo sincroniza con el servidor (Netlify Blobs), que es la fuente
+   compartida entre todos los dispositivos que abren esta misma app. */
 const STORAGE_PREFIX = 'agenda-valentina:';
 
-function lsGet(key){
+async function lsGet(key){
   try{
-    const raw = localStorage.getItem(STORAGE_PREFIX + key);
-    return raw !== null ? raw : null;
+    const res = await fetch(`/.netlify/functions/kv?key=${encodeURIComponent(STORAGE_PREFIX+key)}`);
+    if(res.ok){
+      const data = await res.json();
+      if(data.value !== null && data.value !== undefined){
+        try{ localStorage.setItem(STORAGE_PREFIX+key, data.value); }catch(e){}
+        return data.value;
+      }
+      return null;
+    }
+  }catch(e){ /* sin conexión: usa lo último que se guardó localmente */ }
+  try{
+    return localStorage.getItem(STORAGE_PREFIX + key);
   }catch(e){ return null; }
 }
-function lsSet(key, value){
-  localStorage.setItem(STORAGE_PREFIX + key, value);
+async function lsSet(key, value){
+  try{ localStorage.setItem(STORAGE_PREFIX + key, value); }catch(e){}
+  try{
+    await fetch('/.netlify/functions/kv', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({key: STORAGE_PREFIX+key, value})
+    });
+  }catch(e){
+    console.error('No se pudo sincronizar con el servidor (se guardó local nomás):', e);
+  }
 }
-function lsListKeys(prefix){
+async function lsListKeys(prefix){
+  try{
+    const res = await fetch(`/.netlify/functions/kv?prefix=${encodeURIComponent(STORAGE_PREFIX+prefix)}`);
+    if(res.ok){
+      const data = await res.json();
+      return (data.keys||[]).map(k=>k.slice(STORAGE_PREFIX.length));
+    }
+  }catch(e){ /* sin conexión: usa la caché local */ }
   const keys = [];
   const full = STORAGE_PREFIX + prefix;
   for(let i=0;i<localStorage.length;i++){
@@ -812,7 +841,7 @@ function lsListKeys(prefix){
 
 async function getDay(key){
   try{
-    const raw = lsGet(`day:${key}`);
+    const raw = await lsGet(`day:${key}`);
     return raw ? JSON.parse(raw) : {events:[], reminders:[]};
   }catch(e){
     return {events:[], reminders:[]};
@@ -820,8 +849,7 @@ async function getDay(key){
 }
 async function setDay(key, data){
   try{
-    lsSet(`day:${key}`, JSON.stringify(data));
-    scheduleServerSync();
+    await lsSet(`day:${key}`, JSON.stringify(data));
   }catch(e){
     console.error('storage error', e);
     toast('No se pudo guardar. Intenta de nuevo.');
@@ -829,24 +857,24 @@ async function setDay(key, data){
 }
 async function getFoodOptions(){
   try{
-    const raw = lsGet('food-options');
+    const raw = await lsGet('food-options');
     return raw ? JSON.parse(raw) : {desayuno:[], snack:[], cena:[]};
   }catch(e){
     return {desayuno:[], snack:[], cena:[]};
   }
 }
 async function setFoodOptions(data){
-  try{ lsSet('food-options', JSON.stringify(data)); }
+  try{ await lsSet('food-options', JSON.stringify(data)); }
   catch(e){ toast('No se pudo guardar.'); }
 }
 async function getFoodToday(key){
   try{
-    const raw = lsGet(`food-pick:${key}`);
+    const raw = await lsGet(`food-pick:${key}`);
     return raw ? JSON.parse(raw) : null;
   }catch(e){ return null; }
 }
 async function setFoodToday(key, data){
-  try{ lsSet(`food-pick:${key}`, JSON.stringify(data)); }
+  try{ await lsSet(`food-pick:${key}`, JSON.stringify(data)); }
   catch(e){ toast('No se pudo guardar.'); }
 }
 
@@ -855,12 +883,12 @@ function uid(){return Math.random().toString(36).slice(2,10);}
 /* ---------------- Horario predeterminado (por día de la semana) ---------------- */
 async function getDefaultSchedule(weekday){
   try{
-    const raw = lsGet(`default:${weekday}`);
+    const raw = await lsGet(`default:${weekday}`);
     return raw ? JSON.parse(raw) : [];
   }catch(e){ return []; }
 }
 async function setDefaultSchedule(weekday, arr){
-  try{ lsSet(`default:${weekday}`, JSON.stringify(arr)); }
+  try{ await lsSet(`default:${weekday}`, JSON.stringify(arr)); }
   catch(e){ toast('No se pudo guardar.'); }
 }
 async function applyDefaultScheduleIfNeeded(key, data, weekday){
@@ -903,7 +931,7 @@ async function checkOverdueEvents(){
   if(overduePromptOpen) return;
   const now = new Date();
   let keys;
-  try{ keys = lsListKeys('day:'); }catch(e){ return; }
+  try{ keys = await lsListKeys('day:'); }catch(e){ return; }
   if(!keys) return;
 
   let found = null;
@@ -1083,21 +1111,21 @@ async function subscribeToPush(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(sub)
     });
-    scheduleServerSync(true);
+    scheduleServerNotifSync(true);
   }catch(e){
     console.error('No se pudo suscribir a notificaciones push', e);
   }
 }
 
-let serverSyncTimer = null;
-function scheduleServerSync(immediate){
-  if(serverSyncTimer) clearTimeout(serverSyncTimer);
-  serverSyncTimer = setTimeout(syncEventsToServer, immediate ? 0 : 2000);
+let serverNotifSyncTimer = null;
+function scheduleServerNotifSync(immediate){
+  if(serverNotifSyncTimer) clearTimeout(serverNotifSyncTimer);
+  serverNotifSyncTimer = setTimeout(syncEventsToServerForNotifs, immediate ? 0 : 2000);
 }
 
-async function syncEventsToServer(){
+async function syncEventsToServerForNotifs(){
   try{
-    const keys = lsListKeys('day:');
+    const keys = await lsListKeys('day:');
     if(!keys) return;
     const today = todayDate();
     const events = [];
@@ -1941,10 +1969,10 @@ function showStorageWarning(){
     showStorageWarning();
   }
   updateNotifUI();
+  registerServiceWorker();
   await seedMondaySchedule();
   renderAll();
   scrollSelectedIntoView();
-  registerServiceWorker();
   if('Notification' in window && Notification.permission==='granted'){
     notifOn = true;
     updateNotifUI();
